@@ -1,7 +1,7 @@
 var heightCallback = function() {
     var docHeight = document.body.scrollHeight;
-    document.getElementById('left-side').style.height = docHeight + 'px';
-    document.getElementById('left-side').style.minHeight = docHeight + 'px';
+    document.getElementById('left-side').style.height = (docHeight + 50) + 'px';
+    document.getElementById('left-side').style.minHeight = (docHeight + 50) + 'px';
 };
 
 window.onload = heightCallback;
@@ -48,7 +48,7 @@ function escapeHTMLEntities(str) {
             '&' : '&amp;',
             '<' : '&lt;',
             '>' : '&gt;'
-        } || entity;
+        }[entity] || entity;
     });
 }
 
@@ -107,9 +107,9 @@ function submitNewBookmark(form) {
         return;
     }
 
-    data += 'title=' + title.value;
-    data += '&url=' + url.value;
-    data += '&tags=' + tags.value;
+    data += 'title=' + encodeURIComponent(title.value);
+    data += '&url=' + encodeURIComponent(url.value);
+    data += '&tags=' + encodeURIComponent(tags.value);
 
     AJAXRequest(
         'POST',
@@ -161,6 +161,10 @@ function renderBookmark(bkId, title, url, tags, date, forceComplete) {
     title = escapeHTMLEntities(title);
     url = escapeHTMLEntities(url);
     tags = escapeHTMLEntities(tags);
+
+    if (url.length > 50) {
+        url = url.substring(0, 50) + '...';
+    }
 
 	bookmarkHtml = ((!editing) ? '<article id="bookmark_' + bkId + '">' : '') + 
         '<div class="bookmark-actions">' +
@@ -319,9 +323,9 @@ function editBookmark(form) {
         return;
     }
 
-    data += 'title=' + title.value;
-    data += '&url=' + url.value;
-    data += '&tags=' + tags.value;
+    data += 'title=' + encodeURIComponent(title.value);
+    data += '&url=' + encodeURIComponent(url.value);
+    data += '&tags=' + encodeURIComponent(tags.value);
 
     AJAXRequest(
         'POST',
@@ -471,7 +475,7 @@ function searchBookmarks(query) {
     AJAXRequest(
         'POST',
         '/search/0',
-        'query=' + query,
+        'query=' + encodeURIComponent(query),
         function(response) {
             if (response.error) {
                 showAlert(response.message, 'error');

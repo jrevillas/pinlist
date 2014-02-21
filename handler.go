@@ -6,6 +6,7 @@ import (
 	"github.com/hoisie/mustache"
 	"github.com/justinas/nosurf"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -80,10 +81,18 @@ func GetBookmarksHandler(params martini.Params, req *http.Request, w http.Respon
 // IndexHandler writes out templates
 func IndexHandler(req *http.Request, w http.ResponseWriter, cs *sessions.CookieStore, connection *Connection) {
 	username, userID := GetUserData(cs, req)
+
+	var bookmarks = GetBookmarks(0, connection, userID)
+	for i, bookmark := range bookmarks {
+		if len(bookmark.URL) > 50 {
+			bookmarks[i].URL = bookmark.URL[:50] + "..."
+		}
+	}
+
 	context := map[string]interface{}{
 		"title":      "Magnet",
 		"csrf_token": nosurf.Token(req),
-		"bookmarks":  GetBookmarks(0, connection, userID),
+		"bookmarks":  bookmarks,
 		"tags":       GetTags(connection, userID),
 		"username":   username,
 	}
@@ -102,15 +111,15 @@ func TestHandler(req *http.Request, w http.ResponseWriter, cs *sessions.CookieSt
 func NewBookmarkHandler(req *http.Request, w http.ResponseWriter, cs *sessions.CookieStore, connection *Connection) {
 	// We use a map instead of Bookmark because id would be ""
 	bookmark := make(map[string]interface{})
-	bookmark["Title"] = req.PostFormValue("title")
-	bookmark["Url"] = req.PostFormValue("url")
-
+	bookmark["Title"], _ = url.QueryUnescape(req.PostFormValue("title"))
+	bookmark["Url"], _ = url.QueryUnescape(req.PostFormValue("url"))
 	if !IsValidURL(bookmark["Url"].(string)) || len(bookmark["Title"].(string)) < 1 {
 		WriteJSONResponse(200, true, "The url is not valid or the title is empty.", req, w)
 	} else {
 		_, userID := GetUserData(cs, req)
-		if req.PostFormValue("tags") != "" {
-			bookmark["Tags"] = strings.Split(req.PostFormValue("tags"), ",")
+		tags, _ := url.QueryUnescape(req.PostFormValue("tags"))
+		if tags != "" {
+			bookmark["Tags"] = strings.Split(tags, ",")
 			for i, v := range bookmark["Tags"].([]string) {
 				bookmark["Tags"].([]string)[i] = strings.ToLower(strings.TrimSpace(v))
 			}
@@ -133,15 +142,16 @@ func NewBookmarkHandler(req *http.Request, w http.ResponseWriter, cs *sessions.C
 func EditBookmarkHandler(req *http.Request, w http.ResponseWriter, cs *sessions.CookieStore, connection *Connection, params martini.Params) {
 	// We use a map instead of Bookmark because id would be ""
 	bookmark := make(map[string]interface{})
-	bookmark["Title"] = req.PostFormValue("title")
-	bookmark["Url"] = req.PostFormValue("url")
+	bookmark["Title"], _ = url.QueryUnescape(req.PostFormValue("title"))
+	bookmark["Url"], _ = url.QueryUnescape(req.PostFormValue("url"))
 
 	if !IsValidURL(bookmark["Url"].(string)) || len(bookmark["Title"].(string)) < 1 {
 		WriteJSONResponse(200, true, "The url is not valid or the title is empty.", req, w)
 	} else {
 		_, userID := GetUserData(cs, req)
-		if req.PostFormValue("tags") != "" {
-			bookmark["Tags"] = strings.Split(req.PostFormValue("tags"), ",")
+		tags, _ := url.QueryUnescape(req.PostFormValue("tags"))
+		if tags != "" {
+			bookmark["Tags"] = strings.Split(tags, ",")
 			for i, v := range bookmark["Tags"].([]string) {
 				bookmark["Tags"].([]string)[i] = strings.ToLower(strings.TrimSpace(v))
 			}
@@ -181,7 +191,7 @@ func DeleteBookmarkHandler(params martini.Params, req *http.Request, w http.Resp
 // SearchHandler writes out response when searching for a URL
 func SearchHandler(params martini.Params, req *http.Request, w http.ResponseWriter, cs *sessions.CookieStore, connection *Connection) {
 	_, userID := GetUserData(cs, req)
-	query := req.PostFormValue("query")
+	query, _ := url.QueryUnescape(req.PostFormValue("query"))
 
 	response, err := connection.Search(userID, params, query)
 

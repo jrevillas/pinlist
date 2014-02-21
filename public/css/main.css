@@ -74,7 +74,7 @@ body, html {
 }
 
 body {
-    background: rgb(11, 121, 229);
+    background: #333;
     font-family: 'Lato', sans-serif;
     font-weight: 400;
     color: #FFF;
@@ -89,7 +89,7 @@ body {
     margin: 0 auto;
     padding: 0;
     margin-top: 100px;
-    text-shadow: 0px -2px 0px rgb(17,83,148);
+    text-shadow: 0px -2px 0px #000;
 }
 
 #aside-head h1 {
@@ -107,7 +107,7 @@ body {
     text-align: center;
     padding: 0;
     margin: 0;
-    text-shadow: 0px -2px 0px rgb(17,83,148);
+    text-shadow: 0px -2px 0px #000;
 }
 
 #access-form {
@@ -175,7 +175,7 @@ body {
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.4);
     text-shadow: none;
-    color: rgb(17,83,148);
+    color: #333;
     border-radius: 4px;
     font-weight: 700;
     -webkit-transition: all 200ms ease-in;
@@ -301,7 +301,7 @@ aside {
     text-align: center;
     padding: 0;
     margin: 0;
-    text-shadow: 0px -2px 0px rgb(17,83,148);
+    text-shadow: 0px -2px 0px #000;
 }
 
 #tags ul, #info ul {
@@ -315,6 +315,7 @@ aside {
     font-weight: 700;
     text-transform: uppercase;
     line-height: 1.7em;
+    text-shadow: 0px -2px 0px #000;
 }
 
 #back-index {
@@ -464,7 +465,7 @@ article.empty p {
 .bookmark-url {
     display: inline-block;
     padding-right: 15px;
-    color: #666;
+    color: #666;   
 }
 
 .bookmark-date {

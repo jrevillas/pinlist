@@ -22,13 +22,13 @@
 	</div>
 	<section id="list-bookmarks">
 		{{#bookmarks}}
-		<article id="bookmark_{{Id}}">
+		<article id="bookmark_{{ID}}">
 			<div class="bookmark-actions">
 				<a href="#" class="bookmark-edit" onclick="openEditBookmarkForm(this.parentNode.parentNode); return false;"><span class="ion-levels"></span></a>
-				<a href="#" class="bookmark-delete" onclick="deleteBookmark('{{Id}}', this.parentNode.parentNode); return false;"><span class="ion-trash-b"></span></a>
+				<a href="#" class="bookmark-delete" onclick="deleteBookmark('{{ID}}', this.parentNode.parentNode); return false;"><span class="ion-trash-b"></span></a>
 			</div>
-			<h3><a href="{{Url}}" target="_blank">{{Title}}</a></h3>
-			<div class="bookmark-url"><span class="ion-link bookmark-icon"></span> {{Url}}</div> <div class="bookmark-date"><span class="ion-clock bookmark-icon"></span> {{Date}}</div>
+			<h3><a href="{{URL}}" target="_blank">{{Title}}</a></h3>
+			<div class="bookmark-url"><span class="ion-link bookmark-icon"></span> {{URL}}</div> <div class="bookmark-date"><span class="ion-clock bookmark-icon"></span> {{Date}}</div>
             <div class="bookmark-tags">
                 <span class="ion-ios7-pricetag bookmark-icon"></span>
                 {{#Tags}}
