@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/christopherhesse/rethinkgo"
 	"github.com/codegangsta/martini"
+	r "github.com/dancannon/gorethink"
 	"github.com/gorilla/sessions"
 	"log"
 	"strconv"
@@ -10,22 +10,27 @@ import (
 )
 
 type Connection struct {
-	session *rethinkgo.Session
+	session *r.Session
 }
 
 func (c *Connection) GetBookmarks(userID string, page int64) ([]Bookmark, error) {
 	var bookmarks []Bookmark
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("bookmarks").
-		Filter(rethinkgo.Row.Attr("User").
-		Eq(userID)).
-		OrderBy(rethinkgo.Desc("Created")).
+		OrderBy(r.OrderByOpts{r.Desc("Created")}).
+		Filter(r.Row.Field("User").Eq(userID)).
 		Skip(50 * page).
 		Limit(50).
-		Run(c.session).
-		All(&bookmarks)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+		return bookmarks, err
+	}
+
+	cursor.All(&bookmarks)
+	cursor.Close()
 	return bookmarks, err
 }
 
@@ -38,7 +43,10 @@ func (c *Connection) initDatabase(connectionString string) {
 }
 
 func (c *Connection) SetSession(address, database string) {
-	session, err := rethinkgo.Connect(address, "magnet")
+	session, err := r.Connect(r.ConnectOpts{
+		Address:  address,
+		Database: "magnet",
+	})
 
 	if err != nil {
 		log.Fatal("Error connecting:", err)
@@ -47,47 +55,54 @@ func (c *Connection) SetSession(address, database string) {
 	c.session = session
 }
 
-func (c *Connection) NewBookmark(userID string, bookmark map[string]interface{}) (rethinkgo.WriteResponse, error) {
-	var response rethinkgo.WriteResponse
+func (c *Connection) NewBookmark(userID string, bookmark map[string]interface{}) (r.WriteResponse, error) {
+	var response r.WriteResponse
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("bookmarks").
 		Insert(bookmark).
-		Run(c.session).
-		One(&response)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+	}
+
+	cursor.One(&response)
+	cursor.Close()
 	return response, err
 }
 
-func (c *Connection) DeleteBookmark(userID string, params martini.Params) (rethinkgo.WriteResponse, error) {
-	var response rethinkgo.WriteResponse
+func (c *Connection) DeleteBookmark(userID string, params martini.Params) (r.WriteResponse, error) {
+	var response r.WriteResponse
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("bookmarks").
-		Filter(rethinkgo.Row.Attr("User").
-		Eq(userID).
-		And(rethinkgo.Row.Attr("id").
-		Eq(params["bookmark"]))).
+		Filter(r.Row.Field("User").Eq(userID).
+		And(r.Row.Field("id").Eq(params["bookmark"]))).
 		Delete().
-		Run(c.session).
-		One(&response)
+		Run(c.session)
 
+	cursor.One(&response)
+	cursor.Close()
 	return response, err
 }
 
-func (c *Connection) EditBookmark(userID string, params martini.Params, bookmark map[string]interface{}) (rethinkgo.WriteResponse, error) {
-	var response rethinkgo.WriteResponse
+func (c *Connection) EditBookmark(userID string, params martini.Params, bookmark map[string]interface{}) (r.WriteResponse, error) {
+	var response r.WriteResponse
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("bookmarks").
-		Filter(rethinkgo.Row.Attr("User").
-		Eq(userID).
-		And(rethinkgo.Row.Attr("id").
-		Eq(params["bookmark"]))).
+		Filter(r.Row.Field("User").Eq(userID).
+		And(r.Row.Field("id").Eq(params["bookmark"]))).
 		Update(bookmark).
-		Run(c.session).
-		One(&response)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+	}
+
+	cursor.One(&response)
+	cursor.Close()
 	return response, err
 }
 
@@ -95,18 +110,22 @@ func (c *Connection) Search(userID string, params martini.Params, query string) 
 	var response []interface{}
 	page, _ := strconv.ParseInt(params["page"], 10, 16)
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("bookmarks").
-		Filter(rethinkgo.Row.Attr("Title").
-		Match("(?i)" + query).
-		And(rethinkgo.Row.Attr("User").
-		Eq(userID))).
-		OrderBy(rethinkgo.Desc("Created")).
+		OrderBy(r.OrderByOpts{r.Desc("Created")}).
+		Filter(r.Row.Field("Title").Match("(?i)" + query).
+		And(r.Row.Field("User").Eq(userID))).
 		Skip(50 * page).
 		Limit(50).
-		Run(c.session).
-		All(&response)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+
+	cursor.All(&response)
+	cursor.Close()
 	return response, err
 }
 
@@ -114,131 +133,177 @@ func (c *Connection) GetTag(userID string, params martini.Params) ([]interface{}
 	var response []interface{}
 	page, _ := strconv.ParseInt(params["page"], 10, 16)
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("bookmarks").
-		Filter(rethinkgo.Row.Attr("User").
-		Eq(userID).
-		And(rethinkgo.Row.Attr("Tags").
+		OrderBy(r.OrderByOpts{r.Desc("Created")}).
+		Filter(r.Row.Field("User").Eq(userID).
+		And(r.Row.Field("Tags").
 		Contains(params["tag"]))).
-		OrderBy(rethinkgo.Desc("Created")).
 		Skip(50 * page).
 		Limit(50).
-		Run(c.session).
-		All(&response)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+
+	cursor.All(&response)
+	cursor.Close()
 	return response, err
 }
 
 func (c *Connection) LoginPost(username, password string) ([]interface{}, error) {
 	var response []interface{}
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("users").
-		Filter(rethinkgo.Row.Attr("Username").
-		Eq(username).
-		And(rethinkgo.Row.Attr("Password").
-		Eq(password))).
-		Run(c.session).
-		All(&response)
+		Filter(r.Row.Field("Username").Eq(username).
+		And(r.Row.Field("Password").Eq(password))).
+		Run(c.session)
 
+	if err != nil {
+		return nil, err
+	}
+
+	cursor.All(&response)
+	cursor.Close()
 	return response, err
 }
 
-func (c *Connection) LoginPostInsertSession(session Session) (rethinkgo.WriteResponse, error) {
-	var response rethinkgo.WriteResponse
+func (c *Connection) LoginPostInsertSession(session Session) (r.WriteResponse, error) {
+	var response r.WriteResponse
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("sessions").
 		Insert(session).
-		Run(c.session).
-		One(&response)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+	}
+
+	cursor.One(&response)
+	cursor.Close()
 	return response, err
 }
 
-func (c *Connection) Logout(session *sessions.Session) (rethinkgo.WriteResponse, error) {
-	var response rethinkgo.WriteResponse
+func (c *Connection) Logout(session *sessions.Session) (r.WriteResponse, error) {
+	var response r.WriteResponse
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("sessions").
 		Get(session.Values["session_id"]).
 		Delete().
-		Run(c.session).
-		One(&response)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+	}
+
+	cursor.One(&response)
+	cursor.Close()
 	return response, err
 }
 
 func (c *Connection) SignUp(user *User) ([]interface{}, error) {
 	var response []interface{}
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("users").
-		Filter(rethinkgo.Row.Attr("Username").
-		Eq(user.Username).
-		Or(rethinkgo.Row.Attr("Email").
-		Eq(user.Email))).
-		Run(c.session).
-		All(&response)
+		Filter(r.Row.Field("Username").Eq(user.Username).
+		Or(r.Row.Field("Email").Eq(user.Email))).
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+
+	cursor.All(&response)
+	cursor.Close()
 	return response, err
 }
 
-func (c *Connection) SignUpInsert(user *User) (rethinkgo.WriteResponse, error) {
-	var response rethinkgo.WriteResponse
+func (c *Connection) SignUpInsert(user *User) (r.WriteResponse, error) {
+	var response r.WriteResponse
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("users").
 		Insert(user).
-		Run(c.session).
-		One(&response)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+	}
+
+	cursor.One(&response)
+	cursor.Close()
 	return response, err
 }
 
 func (c *Connection) InitDatabase() {
-	rethinkgo.DbCreate("magnet").Run(c.session).Exec()
-	rethinkgo.TableCreate("users").Run(c.session).Exec()
-	rethinkgo.TableCreate("bookmarks").Run(c.session).Exec()
-	rethinkgo.TableCreate("sessions").Run(c.session).Exec()
+	r.DBCreate("magnet").Exec(c.session)
+	r.TableCreate("users").Exec(c.session)
+	r.TableCreate("bookmarks").Exec(c.session)
+	_, err := r.DB("magnet").Table("bookmarks").IndexCreate("Created").RunWrite(c.session)
+	if err != nil {
+		log.Printf("Error creating index: %s", err)
+	}
+	r.TableCreate("sessions").Exec(c.session)
 }
 
-func (c *Connection) WipeExpiredSessions() (rethinkgo.WriteResponse, error) {
-	var response rethinkgo.WriteResponse
+func (c *Connection) WipeExpiredSessions() (r.WriteResponse, error) {
+	var response r.WriteResponse
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("sessions").
-		Filter(rethinkgo.Row.Attr("Expires").
-		Lt(time.Now().Unix())).
+		Filter(r.Row.Field("Expires").Lt(time.Now().Unix())).
 		Delete().
-		Run(c.session).
-		One(&response)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+	}
+
+	cursor.One(&response)
+	cursor.Close()
 	return response, err
 }
 
 func (c *Connection) GetTags(userID string) ([]interface{}, error) {
 	var response []interface{}
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("bookmarks").
-		Filter(rethinkgo.Row.Attr("User").
-		Eq(userID)).
+		Filter(r.Row.Field("User").Eq(userID)).
 		WithFields("Tags").
-		Run(c.session).
-		All(&response)
+		Run(c.session)
 
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+
+	cursor.All(&response)
+	cursor.Close()
 	return response, err
 }
 
 func (c *Connection) GetUnexpiredSession(session *sessions.Session) (map[string]interface{}, error) {
 	var response map[string]interface{}
 
-	err := rethinkgo.Db("magnet").
+	cursor, err := r.DB("magnet").
 		Table("sessions").
 		Get(session.Values["session_id"]).
-		Run(c.session).
-		One(&response)
+		Run(c.session)
 
+	defer cursor.Close()
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+
+	cursor.One(&response)
 	return response, err
 }
