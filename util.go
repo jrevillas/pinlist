@@ -43,7 +43,7 @@ func GetUserID(cs *sessions.CookieStore, req *http.Request, connection *Connecti
 
 	if err == nil && len(response) > 0 {
 		if int64(response["Expires"].(float64)) > time.Now().Unix() {
-			userID = response["UserId"].(string)
+			userID = response["UserID"].(string)
 		}
 	}
 
