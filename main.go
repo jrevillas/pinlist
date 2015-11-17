@@ -1,7 +1,7 @@
 package main
 
 func main() {
-	config := Load("config.json")
+	config := Load()
 
 	DB := &Connection{}
 
