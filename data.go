@@ -298,12 +298,12 @@ func (c *Connection) GetUnexpiredSession(session *sessions.Session) (map[string]
 		Get(session.Values["session_id"]).
 		Run(c.session)
 
-	defer cursor.Close()
 	if err != nil {
 		log.Print(err)
 		return nil, err
 	}
 
 	cursor.One(&response)
+	cursor.Close()
 	return response, err
 }
