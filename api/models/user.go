@@ -55,7 +55,7 @@ var usernameRegex = regexp.MustCompile(`[a-zA-Z0-9_]+`)
 func (u *User) Validate() bool {
 	return govalidator.IsEmail(u.Email) &&
 		usernameRegex.MatchString(u.Username) &&
-		len(u.Password) > 8
+		len(u.Password) >= 8
 }
 
 type Token struct {
@@ -97,7 +97,7 @@ func (s UserStore) ExistsUser(email, username string) (bool, error) {
 }
 
 const byLoginDetailsQuery = `SELECT * FROM user
-WHERE (email = :login OR username :login)
+WHERE (email = :login OR username = :login)
 AND password = :password`
 
 func (s UserStore) ByLoginDetails(login, password string) (*User, error) {
