@@ -2,7 +2,7 @@ package services
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/go-gorp/gorp"
+	"gopkg.in/gorp.v1"
 	"github.com/mvader/pinlist/api/middlewares"
 )
 

@@ -4,20 +4,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-gorp/gorp"
 	"github.com/mvader/pinlist/api/middlewares"
 	"github.com/mvader/pinlist/api/models"
+	"gopkg.in/gorp.v1"
 )
 
 type Account struct {
-	db *gorp.DbMap
 	*middlewares.Session
 	store *models.UserStore
 }
 
 func NewAccount(db *gorp.DbMap) *Account {
 	return &Account{
-		db:      db,
 		Session: middlewares.NewSession(db),
 		store:   &models.UserStore{db},
 	}
@@ -25,15 +23,17 @@ func NewAccount(db *gorp.DbMap) *Account {
 
 func (a *Account) Register(r *gin.RouterGroup) {
 	g := r.Group("/account")
-	g.POST("/create", middlewares.GuestHourLimit, a.Guest, a.Create)
-	g.POST("/login", middlewares.GuestHourLimit, a.Guest, a.Login)
-	g.POST("/logout", a.Auth, a.Logout)
+	{
+		g.POST("/create", middlewares.GuestHourLimit, a.Guest, a.Create)
+		g.POST("/login", middlewares.GuestHourLimit, a.Guest, a.Login)
+		g.POST("/logout", a.Auth, a.Logout)
+	}
 }
 
 type CreateAccountForm struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `json:"username" binding:"required,alphanum"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 func (a *Account) Create(c *gin.Context) {
@@ -54,12 +54,7 @@ func (a *Account) Create(c *gin.Context) {
 		return
 	}
 
-	user, ok := models.NewUser(form.Username, form.Email, form.Password)
-	if !ok {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
-
+	user := models.NewUser(form.Username, form.Email, form.Password)
 	if err := a.store.Insert(user); err != nil {
 		internalError(c, err)
 		return

@@ -3,7 +3,7 @@ package workers
 import (
 	"time"
 
-	"github.com/go-gorp/gorp"
+	"gopkg.in/gorp.v1"
 	"github.com/mvader/pinlist/api/log"
 	"github.com/mvader/pinlist/api/models"
 )

@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-gorp/gorp"
 	"github.com/mvader/pinlist/api/log"
 	"github.com/mvader/pinlist/api/models"
+	"gopkg.in/gorp.v1"
 )
 
 const (

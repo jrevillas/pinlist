@@ -7,7 +7,7 @@ import (
 	"github.com/op/go-logging"
 )
 
-const logFormat = "%{color}%{shortfile} ▶ [%{level}%]{color:reset}: %{message}"
+const logFormat = "%{color}%{time:15:04:05.000} ▶ [%{level}]%{color:reset}: %{message}"
 
 var (
 	logFile = os.Getenv("LOGFILE")
