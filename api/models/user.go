@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"fmt"
 	"regexp"
 	"time"
@@ -106,7 +107,7 @@ func (s UserStore) ByLoginDetails(login, password string) (*User, error) {
 		"login":    login,
 		"password": password,
 	})
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
 
@@ -123,7 +124,7 @@ func (s UserStore) ByToken(hash string) (*User, error) {
 		"hash": hash,
 		"now":  time.Now(),
 	})
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
 

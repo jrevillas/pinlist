@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/mvader/pinlist/api/log"
 	"github.com/mvader/pinlist/api/models"
 )
 
@@ -17,14 +18,9 @@ func NewSession(db *gorp.DbMap) *Session {
 }
 
 func (s *Session) Run() {
-	tick := time.NewTicker(24 * time.Hour)
-	for {
-		select {
-		case <-tick.C:
-			if err := s.store.RemoveExpiredTokens(); err != nil {
-				// TODO: Log error
-			}
-		case <-time.After(5 * time.Second):
+	for _ = range time.Tick(24 * time.Hour) {
+		if err := s.store.RemoveExpiredTokens(); err != nil {
+			log.Err(err)
 		}
 	}
 }

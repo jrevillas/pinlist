@@ -3,13 +3,13 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-gorp/gorp"
 	_ "github.com/mattes/migrate/driver/postgres"
 	"github.com/mattes/migrate/migrate"
+	"github.com/mvader/pinlist/api/log"
 	"github.com/mvader/pinlist/api/models"
 	"github.com/mvader/pinlist/api/services"
 	"github.com/mvader/pinlist/api/workers"
@@ -26,12 +26,12 @@ var (
 
 func main() {
 	if err := runMigrations(); err != nil {
-		log.Fatal(err)
+		log.Err(err)
 	}
 
 	db, err := databaseConnection()
 	if err != nil {
-		log.Fatal(err)
+		log.Err(err)
 	}
 
 	r := gin.Default()
@@ -49,9 +49,9 @@ func main() {
 	}.Run()
 
 	if cert != "" && key != "" {
-		log.Fatal(r.RunTLS(addr, cert, key))
+		log.Err(r.RunTLS(addr, cert, key))
 	} else {
-		log.Fatal(r.Run(addr))
+		log.Err(r.Run(addr))
 	}
 }
 
@@ -68,7 +68,7 @@ func runMigrations() error {
 	errs, ok := migrate.UpSync(conn, migrationsDir)
 	if !ok {
 		for _, e := range errs {
-			log.Fatal(e)
+			log.Err(e)
 		}
 		return errors.New("error during database migration")
 	}

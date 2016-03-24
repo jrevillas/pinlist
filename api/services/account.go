@@ -25,8 +25,8 @@ func NewAccount(db *gorp.DbMap) *Account {
 
 func (a *Account) Register(r *gin.RouterGroup) {
 	g := r.Group("/account")
-	g.POST("/create", a.Guest, a.Create)
-	g.POST("/login", a.Guest, a.Login)
+	g.POST("/create", middlewares.GuestHourLimit, a.Guest, a.Create)
+	g.POST("/login", middlewares.GuestHourLimit, a.Guest, a.Login)
 	g.POST("/logout", a.Auth, a.Logout)
 }
 
@@ -45,7 +45,7 @@ func (a *Account) Create(c *gin.Context) {
 
 	ok, err := a.store.ExistsUser(form.Email, form.Username)
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		internalError(c, err)
 		return
 	}
 
@@ -61,11 +61,11 @@ func (a *Account) Create(c *gin.Context) {
 	}
 
 	if err := a.store.Insert(user); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		internalError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, user)
+	a.login(c, form.Email, form.Password)
 }
 
 type LoginForm struct {
@@ -80,15 +80,24 @@ func (a *Account) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := a.store.ByLoginDetails(form.Login, form.Password)
+	a.login(c, form.Login, form.Password)
+}
+
+func (a *Account) login(c *gin.Context, login, password string) {
+	user, err := a.store.ByLoginDetails(login, password)
 	if err != nil {
+		internalError(c, err)
+		return
+	}
+
+	if user == nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
 	token := models.NewToken(user.ID)
 	if err := a.store.Insert(token); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		internalError(c, err)
 		return
 	}
 
@@ -98,7 +107,7 @@ func (a *Account) Login(c *gin.Context) {
 func (a *Account) Logout(c *gin.Context) {
 	token := c.MustGet(middlewares.TokenKey).(string)
 	if err := a.store.DeleteToken(token); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		internalError(c, err)
 		return
 	}
 	c.Status(http.StatusOK)
