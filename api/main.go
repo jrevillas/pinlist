@@ -12,6 +12,7 @@ import (
 	"github.com/mattes/migrate/migrate"
 	"github.com/mvader/pinlist/api/models"
 	"github.com/mvader/pinlist/api/services"
+	"github.com/mvader/pinlist/api/workers"
 )
 
 var (
@@ -42,6 +43,10 @@ func main() {
 		services.NewPin(db),
 		services.NewTag(db),
 	}.Register(v1)
+
+	workers.Workers{
+		workers.NewSession(db),
+	}.Run()
 
 	if cert != "" && key != "" {
 		log.Fatal(r.RunTLS(addr, cert, key))
