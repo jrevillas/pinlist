@@ -47,6 +47,11 @@ func (s *Session) Guest(c *gin.Context) {
 // the context.
 func (s *Session) Auth(c *gin.Context) {
 	token := retrieveToken(c)
+	if token == "" {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
 	user, err := s.store.ByToken(token)
 	if err != nil {
 		log.Err(err)
