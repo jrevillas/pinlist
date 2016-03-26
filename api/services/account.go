@@ -9,18 +9,23 @@ import (
 	"gopkg.in/gorp.v1"
 )
 
+// Account is the account service, which has all the endpoints
+// of the API that handle account related requests.
 type Account struct {
 	*middlewares.Session
 	store *models.UserStore
 }
 
+// NewAccount returns a new Account service given a database.
 func NewAccount(db *gorp.DbMap) *Account {
 	return &Account{
 		Session: middlewares.NewSession(db),
-		store:   &models.UserStore{db},
+		store:   &models.UserStore{DbMap: db},
 	}
 }
 
+// Register autoregisters all the needed routes for the service
+// on the given router.
 func (a *Account) Register(r *gin.RouterGroup) {
 	g := r.Group("/account")
 	{
@@ -30,12 +35,15 @@ func (a *Account) Register(r *gin.RouterGroup) {
 	}
 }
 
+// CreateAccountForm is the structure of the form to create
+// a new account. It also contains the validations of itself.
 type CreateAccountForm struct {
-	Username string `json:"username" binding:"required,alphanum"`
-	Email    string `json:"email" binding:"required,email"`
+	Username string `json:"username" binding:"required,alphanum,max=60"`
+	Email    string `json:"email" binding:"required,email,max=100"`
 	Password string `json:"password" binding:"required,min=8"`
 }
 
+// Create is the handler in charge of creating accounts.
 func (a *Account) Create(c *gin.Context) {
 	var form CreateAccountForm
 	if err := c.BindJSON(&form); err != nil {
@@ -63,11 +71,13 @@ func (a *Account) Create(c *gin.Context) {
 	a.login(c, form.Email, form.Password)
 }
 
+// LoginForm is the structure of the form to login.
 type LoginForm struct {
 	Login    string `json:"login" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
+// Login is the handler in charge of logging the user in.
 func (a *Account) Login(c *gin.Context) {
 	var form LoginForm
 	if err := c.BindJSON(&form); err != nil {
@@ -99,6 +109,7 @@ func (a *Account) login(c *gin.Context, login, password string) {
 	c.JSON(http.StatusOK, token)
 }
 
+// Logout terminates the session associated to the current token.
 func (a *Account) Logout(c *gin.Context) {
 	token := c.MustGet(middlewares.TokenKey).(string)
 	if err := a.store.DeleteToken(token); err != nil {

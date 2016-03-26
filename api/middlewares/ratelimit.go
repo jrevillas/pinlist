@@ -26,6 +26,8 @@ var (
 
 const maxHits = 20
 
+// GuestHourLimit is a middleware that will allow only 20
+// requests per hour to all guest visitors.
 func GuestHourLimit(c *gin.Context) {
 	addr := getIP(c.Request)
 
@@ -73,6 +75,6 @@ func cleanRegister() {
 	}
 }
 
-func main() {
+func init() {
 	go cleanRegister()
 }
