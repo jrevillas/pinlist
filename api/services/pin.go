@@ -71,6 +71,19 @@ func (s *Pin) Create(c *gin.Context) {
 	user := s.user(c)
 	pin := models.NewPin(user, form.Title, form.URL, form.Tags, form.List)
 
+	if form.List > 0 {
+		ok, err := s.listStore.UserHasAccess(user, form.List)
+		if err != nil {
+			internalError(c, err)
+			return
+		}
+
+		if !ok {
+			unauthorized(c)
+			return
+		}
+	}
+
 	if err := s.store.Create(pin); err != nil {
 		internalError(c, err)
 		return

@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"gopkg.in/gorp.v1"
@@ -9,7 +10,7 @@ import (
 
 // Pin is a link pinned to a list or to an account.
 type Pin struct {
-	ID        int64     `db:"id,primarykey,autoincrement" json:"id"`
+	ID        int64     `db:"id" json:"id"`
 	Title     string    `db:"title" json:"title"`
 	URL       string    `db:"url" json:"url"`
 	Tags      []*Tag    `db:"-" json:"tags"`
@@ -21,9 +22,15 @@ type Pin struct {
 
 // NewPin creates a new pin with all its fields.
 func NewPin(creator *User, title, url string, tags []string, list int64) *Pin {
-	var tagList = make([]*Tag, len(tags))
-	for i, t := range tags {
-		tagList[i] = NewTag(t)
+	var tagList []*Tag
+	var tagMap = make(map[string]struct{})
+	for _, t := range tags {
+		// make sure no repeated tags make it to the db
+		if _, ok := tagMap[t]; ok {
+			continue
+		}
+		tagMap[t] = struct{}{}
+		tagList = append(tagList, NewTag(t))
 	}
 
 	return &Pin{
@@ -43,6 +50,9 @@ type PinStore struct {
 	*gorp.DbMap
 }
 
+const updateListPinsQuery = `UPDATE list
+SET pins = pins + 1 WHERE id = %s`
+
 // Create inserts a pin into the database and its associated tags.
 func (s PinStore) Create(pin *Pin) error {
 	tx, err := s.Begin()
@@ -56,10 +66,18 @@ func (s PinStore) Create(pin *Pin) error {
 
 	var tags []interface{}
 	for _, t := range pin.Tags {
+		t.PinID = pin.ID
 		tags = append(tags, t)
 	}
 	if err := tx.Insert(tags...); err != nil {
 		return err
+	}
+
+	if pin.ListID > 0 {
+		q := fmt.Sprintf(updateListPinsQuery, s.Dialect.BindVar(0))
+		if _, err := tx.Exec(q, pin.ListID); err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit()
@@ -79,13 +97,13 @@ func (s PinStore) ByID(ID int64) (*Pin, error) {
 }
 
 const (
-	allForUserQuery = `SELECT p.* FROM pin p
+	allForUserQuery = `SELECT DISTINCT p.* FROM pin p
 LEFT JOIN user_has_list l ON l.list_id = p.list_id
-WHERE (p.user_id = :user OR l.user_id = :user)
+WHERE (p.creator_id = :user OR l.user_id = :user)
 ORDER BY p.created_at DESC LIMIT :limit`
-	allForUserQueryWithOffset = `SELECT p.* FROM pin p
+	allForUserQueryWithOffset = `SELECT DISTINCT p.* FROM pin p
 LEFT JOIN user_has_list l ON l.list_id = p.list_id
-WHERE (p.user_id = :user OR l.user_id = :user)
+WHERE (p.creator_id = :user OR l.user_id = :user)
 AND p.id < :offset
 ORDER BY p.created_at DESC LIMIT :limit`
 )
@@ -107,13 +125,10 @@ func (s PinStore) AllForUser(user *User, limit int, offset int64) ([]*Pin, error
 
 const (
 	allForListQuery = `SELECT p.* FROM pin p
-LEFT JOIN user_has_list l
-ON l.list_id = p.list_id
-WHERE l.list_id = :list
+WHERE p.list_id = :list
 ORDER BY p.created_at DESC LIMIT :limit`
 	allForListQueryWithOffset = `SELECT p.* FROM pin p
-LEFT JOIN user_has_list l ON l.list_id = p.list_id
-WHERE l.list_id = :list
+WHERE p.list_id = :list
 AND p.id < :offset
 ORDER BY p.created_at DESC LIMIT :limit`
 )
@@ -122,7 +137,7 @@ ORDER BY p.created_at DESC LIMIT :limit`
 func (s PinStore) AllForList(user *User, list int64, limit int, offset int64) ([]*Pin, error) {
 	q := allForListQuery
 	params := map[string]interface{}{
-		"user":  user.ID,
+		"list":  list,
 		"limit": limit,
 	}
 	if offset > 0 {
@@ -174,8 +189,8 @@ func (s PinStore) withTagsAndCreator(creator *User, q string, params map[string]
 		return nil, err
 	}
 
-	for _, u := range users {
-		for _, p := range pins {
+	for _, p := range pins {
+		for _, u := range users {
 			if p.CreatorID == creator.ID {
 				break
 			} else if p.CreatorID == u.ID {
@@ -189,13 +204,11 @@ func (s PinStore) withTagsAndCreator(creator *User, q string, params map[string]
 }
 
 const pinTagsQuery = `SELECT * FROM tag
-WHERE pin_id IN :pins`
+WHERE pin_id IN %s`
 
 func (s PinStore) pinTags(ids []int64) ([]*Tag, error) {
 	var tags []*Tag
-	_, err := s.Select(&tags, pinTagsQuery, map[string]interface{}{
-		"pins": ids,
-	})
+	_, err := s.Select(&tags, inQuery(pinTagsQuery, ids))
 	if err != nil {
 		return nil, err
 	}
@@ -204,13 +217,11 @@ func (s PinStore) pinTags(ids []int64) ([]*Tag, error) {
 }
 
 const pinCreatorsQuery = `SELECT * FROM user
-WHERE id IN :creators`
+WHERE id IN %s`
 
 func (s PinStore) pinCreators(ids []int64) ([]*User, error) {
 	var users []*User
-	_, err := s.Select(&users, pinCreatorsQuery, map[string]interface{}{
-		"creators": ids,
-	})
+	_, err := s.Select(&users, inQuery(pinCreatorsQuery, ids))
 	if err != nil {
 		return nil, err
 	}

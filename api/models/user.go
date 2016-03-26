@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/mvader/pinlist/api/log"
@@ -28,7 +29,7 @@ const (
 
 // User defines the model of an user account.
 type User struct {
-	ID        int64      `db:"id,primarykey,autoincrement" json:"id"`
+	ID        int64      `db:"id" json:"id"`
 	Status    UserStatus `db:"status" json:"status"`
 	Username  string     `db:"username" json:"username"`
 	Email     string     `db:"email" json:"email"`
@@ -61,7 +62,7 @@ func NewUser(username, email, password string) *User {
 // Token is an code that grants access to the app to a
 // specific user for a certain amount of time.
 type Token struct {
-	ID        int64     `db:"id,primarykey,autoincrement" json:"-"`
+	ID        int64     `db:"id" json:"-"`
 	Hash      string    `db:"hash" json:"hash"`
 	Until     time.Time `db:"until" json:"until"`
 	CreatedAt time.Time `db:"created_at" json:"-"`
@@ -147,20 +148,22 @@ func (s UserStore) ByToken(hash string) (*User, error) {
 	return &user, nil
 }
 
-const deleteTokenQuery = `DELETE FROM token WHERE hash = ?`
+const deleteTokenQuery = `DELETE FROM token WHERE hash = %s`
 
 // DeleteToken removes the token with the given hash from
 // the database.
 func (s UserStore) DeleteToken(hash string) error {
-	_, err := s.Exec(deleteTokenQuery, hash)
+	q := fmt.Sprintf(deleteTokenQuery, s.Dialect.BindVar(0))
+	_, err := s.Exec(q, hash)
 	return err
 }
 
 const removeExpiredTokensQuery = `DELETE FROM token
-WHERE until < ?`
+WHERE until < %s`
 
 // RemoveExpiredTokens removes all expired tokens from the database.
 func (s UserStore) RemoveExpiredTokens() error {
-	_, err := s.Exec(removeExpiredTokensQuery, time.Now())
+	q := fmt.Sprintf(removeExpiredTokensQuery, s.Dialect.BindVar(0))
+	_, err := s.Exec(q, time.Now())
 	return err
 }

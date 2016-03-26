@@ -6,13 +6,11 @@ import "gopkg.in/gorp.v1"
 // Lists can be shared between many users but have only one
 // creator.
 type List struct {
-	ID      int64          `db:"id,primarykey,autoincrement" json:"id"`
-	Name    string         `db:"name" json:"name"`
-	OwnerID int            `db:"owner_id" json:"-"`
-	Owner   *User          `db:"-" json:"owner"`
-	Pins    int            `db:"pins" json:"pins"`
-	Public  bool           `db:"public" json:"public"`
-	Users   []*UserHasList `db:"-" json:"users"`
+	ID     int64          `db:"id" json:"id"`
+	Name   string         `db:"name" json:"name"`
+	Pins   int            `db:"pins" json:"pins"`
+	Public bool           `db:"public" json:"public"`
+	Users  []*UserHasList `db:"-" json:"users"`
 }
 
 // ListRole defines the kind of role an user has for a list.
@@ -30,7 +28,7 @@ const (
 // UserHasList defines the relationship between an user and a
 // list, which also states the role of the user for that list.
 type UserHasList struct {
-	ID     int64    `id:"id,primarykey,autoincrement" json:"-"`
+	ID     int64    `id:"id" json:"-"`
 	Role   ListRole `db:"role" json:"role"`
 	ListID int64    `db:"list_id" json:"-"`
 	UserID int64    `db:"user_id" json:"-"`
