@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"gopkg.in/gorp.v1"
@@ -24,6 +25,7 @@ func NewPin(creator *User, title, url string, tags []string, list int64) *Pin {
 	var tagList []*Tag
 	var tagMap = make(map[string]struct{})
 	for _, t := range tags {
+		t = strings.ToLower(strings.TrimSpace(t))
 		// make sure no repeated tags make it to the db
 		if _, ok := tagMap[t]; ok {
 			continue

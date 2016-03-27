@@ -39,6 +39,7 @@ func (t *Tag) user(ctx *gin.Context) *models.User {
 // TagListResponse is the response with all tags retrieved.
 type TagListResponse struct {
 	Count int                `json:"count"`
+	Total int64              `json:"total"`
 	Items []*models.TagCount `json:"items"`
 }
 
@@ -53,8 +54,15 @@ func (t *Tag) List(c *gin.Context) {
 		return
 	}
 
+	total, err := t.store.Count(user.ID)
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+
 	c.JSON(http.StatusOK, TagListResponse{
 		Count: len(tags),
+		Total: total,
 		Items: tags,
 	})
 }

@@ -45,3 +45,16 @@ func (s TagStore) All(user int64, limit, offset int) ([]*TagCount, error) {
 	}
 	return tags, nil
 }
+
+const countTagsQuery = `SELECT COUNT(*) FROM (SELECT t.name FROM tag t
+INNER JOIN pin p ON t.pin_id = p.id
+LEFT JOIN user_has_list l ON l.list_id = p.list_id
+WHERE (p.creator_id = :user OR l.user_id = :user)
+GROUP BY t.name)`
+
+// Count retrieves the number of unique tags an user has.
+func (s TagStore) Count(user int64) (int64, error) {
+	return s.SelectInt(countTagsQuery, map[string]interface{}{
+		"user": user,
+	})
+}

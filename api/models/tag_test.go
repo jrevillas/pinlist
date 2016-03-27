@@ -72,3 +72,9 @@ func (s *TagSuite) TestAll(c *check.C) {
 	c.Assert(tags[2].Name, check.Equals, "t")
 	c.Assert(tags[2].Count, check.Equals, 1)
 }
+
+func (s *TagSuite) TestCount(c *check.C) {
+	n, err := s.store.Count(1)
+	c.Assert(err, check.IsNil)
+	c.Assert(n, check.Equals, int64(8))
+}
