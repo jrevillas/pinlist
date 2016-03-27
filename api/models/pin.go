@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -83,13 +82,43 @@ func (s PinStore) Create(pin *Pin) error {
 	return tx.Commit()
 }
 
+const (
+	decrListPinsQuery = `UPDATE list
+SET pins = pins - 1 WHERE id = %s`
+	deletePinTagsQuery = `DELETE FROM tag
+WHERE pin_id = %s`
+)
+
+// Delete removes a pin and its tags and also decrements the
+// count of pins in a list, if any.
+func (s PinStore) Delete(p *Pin) error {
+	tx, err := s.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err := tx.Delete(p); err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(fmt.Sprintf(deletePinTagsQuery, s.Dialect.BindVar(0)), p.ID); err != nil {
+		return err
+	}
+
+	if p.ListID > 0 {
+		q := fmt.Sprintf(decrListPinsQuery, s.Dialect.BindVar(0))
+		if _, err := tx.Exec(q, p.ListID); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
 // ByID retrieves a pin by its id.
 func (s PinStore) ByID(ID int64) (*Pin, error) {
 	p, err := s.Get(Pin{}, ID)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
-	if err != nil {
+	if err != nil || p == nil {
 		return nil, err
 	}
 

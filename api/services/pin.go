@@ -57,7 +57,7 @@ type CreatePinForm struct {
 	Title string   `json:"title" binding:"required,max=255"`
 	URL   string   `json:"name" binding:"required,url,max=255"`
 	Tags  []string `json:"tags" binding:"omitempty,lte=30,dive,required,max=30"`
-	List  int64    `json:"list" binding:"omitempty,numeric"`
+	List  int64    `json:"list" binding:"omitempty,gte=1"`
 }
 
 // Create handles the creation of a pin.
@@ -94,8 +94,7 @@ func (s *Pin) Create(c *gin.Context) {
 
 // Delete handles the delete of a pin.
 func (s *Pin) Delete(c *gin.Context) {
-	_, err := s.store.Delete(c.MustGet("pin").(*models.Pin).ID)
-	if err != nil {
+	if err := s.store.Delete(c.MustGet("pin").(*models.Pin)); err != nil {
 		internalError(c, err)
 		return
 	}

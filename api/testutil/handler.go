@@ -6,12 +6,20 @@ import (
 	"net/http/httptest"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mvader/pinlist/api/models"
 )
 
-func Handler(path string, handler gin.HandlerFunc) *gin.Engine {
+func WithAuth(user *models.User) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("session_user", user)
+		c.Next()
+	}
+}
+
+func Handler(path string, handlers ...gin.HandlerFunc) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.Any(path, handler)
+	r.Any(path, handlers...)
 	return r
 }
 
