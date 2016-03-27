@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"os"
 
 	"gopkg.in/check.v1"
@@ -32,7 +33,8 @@ func (s *PinSuite) insertFixtures(c *check.C) {
 
 	list := &List{Name: "foo"}
 	list2 := &List{Name: "bar"}
-	c.Assert(s.store.Insert(list, list2), check.IsNil)
+	list3 := &List{Name: "baz"}
+	c.Assert(s.store.Insert(list, list2, list3), check.IsNil)
 
 	uhl1 := &UserHasList{ListID: list.ID, UserID: user1.ID}
 	uhl2 := &UserHasList{ListID: list.ID, UserID: user2.ID}
@@ -84,6 +86,23 @@ func (s *PinSuite) TestCreate(c *check.C) {
 	l, err := s.store.Get(List{}, p.ListID)
 	c.Assert(err, check.IsNil)
 	c.Assert(l.(*List).Pins, check.Equals, 1)
+}
+
+func (s *PinSuite) TestDelete(c *check.C) {
+	pin := NewPin(&User{ID: 1}, "title", "url", []string{"a", "b"}, 3)
+	c.Assert(s.store.Create(pin), check.IsNil)
+	c.Assert(s.store.Delete(pin), check.IsNil)
+
+	p, err := s.store.Get(Pin{}, pin.ID)
+	c.Assert(err, check.IsNil)
+	c.Assert(p, check.IsNil)
+	n, err := s.store.SelectInt(fmt.Sprintf("SELECT COUNT(*) FROM tag WHERE pin_id = %d", pin.ID))
+	c.Assert(err, check.IsNil)
+	c.Assert(n, check.Equals, int64(0))
+
+	l, err := s.store.Get(List{}, 3)
+	c.Assert(err, check.IsNil)
+	c.Assert(l.(*List).Pins, check.Equals, 0)
 }
 
 func (s *PinSuite) TestAllForUser(c *check.C) {
