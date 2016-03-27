@@ -74,7 +74,7 @@ func (s ListStore) UserHasAccess(user *User, list int64) (bool, error) {
 // ByID returns the list with the given id.
 func (s ListStore) ByID(id int64) (*List, error) {
 	l, err := s.Get(List{}, id)
-	if err != nil {
+	if err != nil || l == nil {
 		return nil, err
 	}
 	return l.(*List), nil

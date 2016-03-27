@@ -6,13 +6,13 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"gopkg.in/gorp.v1"
 	_ "github.com/mattes/migrate/driver/postgres"
 	"github.com/mattes/migrate/migrate"
 	"github.com/mvader/pinlist/api/log"
 	"github.com/mvader/pinlist/api/models"
 	"github.com/mvader/pinlist/api/services"
 	"github.com/mvader/pinlist/api/workers"
+	"gopkg.in/gorp.v1"
 )
 
 var (
@@ -27,11 +27,13 @@ var (
 func main() {
 	if err := runMigrations(); err != nil {
 		log.Err(err)
+		return
 	}
 
 	db, err := databaseConnection()
 	if err != nil {
 		log.Err(err)
+		return
 	}
 
 	r := gin.Default()

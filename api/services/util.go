@@ -46,3 +46,16 @@ func limitAndOffset(ctx *gin.Context) (int, int64) {
 	after, _ := strconv.ParseInt(ctx.Query(offsetParam), 10, 64)
 	return limit, after
 }
+
+func intParam(ctx *gin.Context, param string) int {
+	n, _ := strconv.Atoi(ctx.Query(param))
+	return n
+}
+
+func intParamOrDefault(ctx *gin.Context, param string, def int) int {
+	n := intParam(ctx, param)
+	if n <= 0 {
+		return def
+	}
+	return n
+}

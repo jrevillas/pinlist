@@ -9,6 +9,7 @@ import (
 	"gopkg.in/gorp.v1"
 )
 
+// CreateTestDatabase creates a new test sqlite3 database.
 func CreateTestDatabase() (string, *gorp.DbMap, error) {
 	f, err := ioutil.TempFile("", "db_test_")
 	if err != nil {
