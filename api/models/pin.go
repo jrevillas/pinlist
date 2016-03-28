@@ -186,6 +186,10 @@ func (s PinStore) withTagsAndCreator(creator *User, q string, params map[string]
 		return nil, err
 	}
 
+	if creator == nil {
+		creator = &User{}
+	}
+
 	var tagIDs []int64
 	var userIDs []int64
 	for _, p := range pins {

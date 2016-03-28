@@ -40,7 +40,8 @@ func (s *PinSuite) insertFixtures(c *check.C) {
 
 	list := &models.List{Name: "foo"}
 	list2 := &models.List{Name: "bar"}
-	c.Assert(s.pin.store.Insert(list, list2), check.IsNil)
+	list3 := &models.List{Name: "baz", Public: true}
+	c.Assert(s.pin.store.Insert(list, list2, list3), check.IsNil)
 
 	uhl1 := &models.UserHasList{ListID: list.ID, UserID: user1.ID}
 	uhl2 := &models.UserHasList{ListID: list.ID, UserID: user2.ID}
@@ -53,6 +54,7 @@ func (s *PinSuite) insertFixtures(c *check.C) {
 		models.NewPin(user2, "pin4", "url4", nil, 0),
 		models.NewPin(user2, "pin5", "url5", nil, list.ID),
 		models.NewPin(user2, "pin6", "url6", []string{"a", "b"}, list.ID),
+		models.NewPin(user2, "pin7", "url7", []string{"a", "b"}, list3.ID),
 	}
 
 	for _, p := range pins {
@@ -60,7 +62,7 @@ func (s *PinSuite) insertFixtures(c *check.C) {
 	}
 
 	s.users = []*models.User{user1, user2}
-	s.lists = []*models.List{list, list2}
+	s.lists = []*models.List{list, list2, list3}
 }
 
 func (s *PinSuite) TearDownSuite(c *check.C) {
@@ -171,6 +173,42 @@ func (s *PinSuite) TestDelete(c *check.C) {
 			l, err := s.pin.store.Get(models.List{}, s.lists[1].ID)
 			c.Assert(err, check.IsNil)
 			c.Assert(l.(*models.List).Pins, check.Equals, 0)
+		}
+	}
+}
+
+func (s *PinSuite) TestList(c *check.C) {
+	tests := []struct {
+		url   string
+		code  int
+		count int
+		user  *models.User
+		pins  []string
+	}{
+		{"/pins?list=3", http.StatusOK, 1, nil, []string{"pin7"}},
+		{"/pins?list=2", http.StatusUnauthorized, 0, nil, nil},
+		{"/pins?list=1", http.StatusOK, 4, s.users[0], []string{"title", "pin6", "pin5", "pin3"}},
+		{"/pins?list=1", http.StatusOK, 4, s.users[1], []string{"title", "pin6", "pin5", "pin3"}},
+		{"/pins?limit=4", http.StatusOK, 4, s.users[0], []string{"title", "title", "pin6", "pin5", "pin3"}},
+		{"/pins?limit=10&offset=2", http.StatusOK, 1, s.users[0], []string{"pin1"}},
+	}
+
+	for _, t := range tests {
+		r := testutil.MustRequest("GET", t.url, nil)
+		w := testutil.ExecuteHandler(
+			testutil.Handler("/pins", testutil.WithAuth(t.user), s.pin.List),
+			r,
+		)
+
+		c.Assert(w.Code, check.Equals, t.code)
+
+		if t.code == http.StatusOK {
+			var resp PinListResponse
+			c.Assert(json.Unmarshal(w.Body.Bytes(), &resp), check.IsNil)
+			c.Assert(resp.Count, check.Equals, t.count)
+			for i, p := range resp.Items {
+				c.Assert(p.Title, check.Equals, t.pins[i])
+			}
 		}
 	}
 }
