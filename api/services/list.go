@@ -37,8 +37,8 @@ func (l *List) Register(r *gin.RouterGroup) {
 
 // CreateListForm defines the schema of data to create a list.
 type CreateListForm struct {
-	Name        string `json:"name" binding:"required,gt=3"`
-	Description string `json:"description" binding:"omitempty,gt=3"`
+	Name        string `json:"name" binding:"required,gt=3,max=100"`
+	Description string `json:"description" binding:"omitempty,gt=3,max=255"`
 }
 
 // Create handles the creation of new lists.
@@ -61,7 +61,7 @@ func (l *List) Create(c *gin.Context) {
 // ListListResponse defines the response structure of a list retrieval.
 type ListListResponse struct {
 	Count int            `json:"count"`
-	Total int            `json:"total"`
+	Total int64          `json:"total"`
 	Items []*models.List `json:"items"`
 }
 
@@ -70,13 +70,13 @@ func (l *List) List(c *gin.Context) {
 	user := userFromCtx(c)
 	limit := intParamOrDefault(c, limitParam, 25)
 	offset := intParamOrDefault(c, offsetParam, 0)
-	lists, err := t.store.All(user.ID, limit, offset)
+	lists, err := l.store.All(user.ID, limit, offset)
 	if err != nil {
 		internalError(c, err)
 		return
 	}
 
-	total, err := t.store.Count(user.ID)
+	total, err := l.store.Count(user.ID)
 	if err != nil {
 		internalError(c, err)
 		return
@@ -92,8 +92,8 @@ func (l *List) List(c *gin.Context) {
 // UpdateListForm defines the schema of data to update a list.
 type UpdateListForm struct {
 	Public      bool   `json:"public"`
-	Name        string `json:"name" binding:"required,gt=3"`
-	Description string `json:"description" binding:"omitempty,gt=3"`
+	Name        string `json:"name" binding:"required,gt=3,max=100"`
+	Description string `json:"description" binding:"omitempty,gt=3,max=255"`
 	// Even though UserHasList is ready, some thought has to be
 	// put on the issue before allowing sharing between users.
 	// So, no shares yet.

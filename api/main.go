@@ -16,10 +16,11 @@ import (
 )
 
 var (
-	conn = os.Getenv("DB_CONN")
-	addr = os.Getenv("RUN_ADDR")
-	cert = os.Getenv("SSL_CERT")
-	key  = os.Getenv("SSL_KEY")
+	conn  = os.Getenv("DB_CONN")
+	dbURL = os.Getenv("DB_URL")
+	addr  = os.Getenv("RUN_ADDR")
+	cert  = os.Getenv("SSL_CERT")
+	key   = os.Getenv("SSL_KEY")
 
 	migrationsDir = os.Getenv("MIGRATIONS_DIR")
 )
@@ -67,7 +68,7 @@ func databaseConnection() (*gorp.DbMap, error) {
 }
 
 func runMigrations() error {
-	errs, ok := migrate.UpSync(conn, migrationsDir)
+	errs, ok := migrate.UpSync(dbURL, migrationsDir)
 	if !ok {
 		for _, e := range errs {
 			log.Err(e)

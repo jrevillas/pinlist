@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -10,14 +11,14 @@ import (
 
 // Pin is a link pinned to a list or to an account.
 type Pin struct {
-	ID        int64     `db:"id" json:"id"`
-	Title     string    `db:"title" json:"title"`
-	URL       string    `db:"url" json:"url"`
-	Tags      []*Tag    `db:"-" json:"tags"`
-	CreatorID int64     `db:"creator_id" json:"-"`
-	Creator   *User     `db:"-" json:"creator"`
-	ListID    int64     `db:"list_id" json:"list_id"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	ID        int64         `db:"id" json:"id"`
+	Title     string        `db:"title" json:"title"`
+	URL       string        `db:"url" json:"url"`
+	Tags      []*Tag        `db:"-" json:"tags"`
+	CreatorID int64         `db:"creator_id" json:"-"`
+	Creator   *User         `db:"-" json:"creator"`
+	ListID    sql.NullInt64 `db:"list_id" json:"list_id"`
+	CreatedAt time.Time     `db:"created_at" json:"created_at"`
 }
 
 // NewPin creates a new pin with all its fields.
@@ -40,7 +41,7 @@ func NewPin(creator *User, title, url string, tags []string, list int64) *Pin {
 		Tags:      tagList,
 		CreatorID: creator.ID,
 		Creator:   creator,
-		ListID:    list,
+		ListID:    sql.NullInt64{Int64: list, Valid: list > 0},
 		CreatedAt: time.Now(),
 	}
 }
@@ -74,7 +75,7 @@ func (s PinStore) Create(pin *Pin) error {
 		return err
 	}
 
-	if pin.ListID > 0 {
+	if pin.ListID.Int64 > 0 {
 		q := fmt.Sprintf(updateListPinsQuery, s.Dialect.BindVar(0))
 		if _, err := tx.Exec(q, pin.ListID); err != nil {
 			return err
@@ -107,7 +108,7 @@ func (s PinStore) Delete(p *Pin) error {
 		return err
 	}
 
-	if p.ListID > 0 {
+	if p.ListID.Int64 > 0 {
 		q := fmt.Sprintf(decrListPinsQuery, s.Dialect.BindVar(0))
 		if _, err := tx.Exec(q, p.ListID); err != nil {
 			return err
