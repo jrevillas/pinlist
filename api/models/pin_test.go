@@ -62,7 +62,7 @@ func (s *PinSuite) TestNewPin(c *check.C) {
 	p := NewPin(&User{ID: 3}, "title", "URL", []string{"a", "b", "a"}, 1)
 	c.Assert(p.Title, check.Equals, "title")
 	c.Assert(p.URL, check.Equals, "URL")
-	c.Assert(p.ListID, check.Equals, int64(1))
+	c.Assert(p.ListID.Int64, check.Equals, int64(1))
 	c.Assert(p.CreatorID, check.Equals, int64(3))
 	c.Assert(p.Tags, check.HasLen, 2)
 	c.Assert(p.Tags[0].Name, check.Equals, "a")

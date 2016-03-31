@@ -220,7 +220,6 @@ func (s *PinSuite) assertPin(c *check.C, w *httptest.ResponseRecorder, form Crea
 
 	c.Assert(pin.Title, check.Equals, form.Title)
 	c.Assert(pin.URL, check.Equals, form.URL)
-	c.Assert(pin.ListID, check.Equals, form.List)
 	c.Assert(pin.Tags, check.HasLen, len(form.Tags))
 	for i, t := range pin.Tags {
 		c.Assert(t.Name, check.Equals, form.Tags[i])
