@@ -12,7 +12,7 @@ CREATE TABLE "user" (
   username varchar(60) not null,
   email varchar(100) not null,
   password varchar(255) not null,
-  createdat TIMESTAMP not null default CURRENT_TIMESTAMP
+  created_at TIMESTAMP not null default CURRENT_TIMESTAMP
 );
 
 CREATE UNIQUE INDEX user_email_idx ON "user" (email);
@@ -43,7 +43,7 @@ CREATE TABLE pin (
   title varchar(255) not null,
   url varchar(255) not null,
   creator_id bigint not null,
-  list_id bigint not null default 0,
+  list_id bigint null,
   created_at TIMESTAMP not null default CURRENT_TIMESTAMP,
   CONSTRAINT fk_user_creator_id FOREIGN KEY (creator_id) REFERENCES "user"(id),
   CONSTRAINT fk_list_list_id FOREIGN KEY (list_id) REFERENCES list(id)

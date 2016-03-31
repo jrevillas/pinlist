@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mvader/pinlist/api/log"
 	"github.com/mvader/pinlist/api/middlewares"
 	"github.com/mvader/pinlist/api/models"
 	"gopkg.in/gorp.v1"
@@ -55,7 +56,7 @@ func (s *Pin) list(ctx *gin.Context) int64 {
 // new pin. It also contains the validation via binding.
 type CreatePinForm struct {
 	Title string   `json:"title" binding:"required,max=255"`
-	URL   string   `json:"name" binding:"required,url,max=255"`
+	URL   string   `json:"url" binding:"required,url,max=255"`
 	Tags  []string `json:"tags" binding:"omitempty,lte=30,dive,required,max=30"`
 	List  int64    `json:"list" binding:"omitempty,gte=1"`
 }
@@ -64,6 +65,7 @@ type CreatePinForm struct {
 func (s *Pin) Create(c *gin.Context) {
 	var form CreatePinForm
 	if err := c.BindJSON(&form); err != nil {
+		log.Err(err)
 		badRequest(c)
 		return
 	}

@@ -88,7 +88,7 @@ func (s *Session) MaybeAuth(c *gin.Context) {
 func retrieveToken(c *gin.Context) string {
 	auth := c.Request.Header.Get(AuthKey)
 	if auth != "" {
-		parts := strings.SplitN(auth, " ", 1)
+		parts := strings.SplitN(auth, " ", 2)
 		return parts[len(parts)-1]
 	}
 

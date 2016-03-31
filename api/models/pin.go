@@ -129,12 +129,19 @@ func (s PinStore) ByID(ID int64) (*Pin, error) {
 	return p.(*Pin), nil
 }
 
+type pinWithUser struct {
+	BasicUser
+	Pin
+}
+
 const (
-	allForUserQuery = `SELECT DISTINCT p.* FROM pin p
+	allForUserQuery = `SELECT DISTINCT p.*, u.username, u.status, u.email FROM pin p
+INNER JOIN "user" u ON u.id = p.creator_id
 LEFT JOIN user_has_list l ON l.list_id = p.list_id
 WHERE (p.creator_id = :user OR l.user_id = :user)
 ORDER BY p.created_at DESC LIMIT :limit`
-	allForUserQueryWithOffset = `SELECT DISTINCT p.* FROM pin p
+	allForUserQueryWithOffset = `SELECT DISTINCT p.*, u.username, u.status, u.email FROM pin p
+INNER JOIN "user" u ON u.id = p.creator_id
 LEFT JOIN user_has_list l ON l.list_id = p.list_id
 WHERE (p.creator_id = :user OR l.user_id = :user)
 AND p.id < :offset
@@ -157,10 +164,12 @@ func (s PinStore) AllForUser(user *User, limit int, offset int64) ([]*Pin, error
 }
 
 const (
-	allForListQuery = `SELECT p.* FROM pin p
+	allForListQuery = `SELECT p.*, u.username, u.status, u.email FROM pin p
+INNER JOIN "user" u ON u.id = p.creator_id
 WHERE p.list_id = :list
 ORDER BY p.created_at DESC LIMIT :limit`
-	allForListQueryWithOffset = `SELECT p.* FROM pin p
+	allForListQueryWithOffset = `SELECT p.*, u.username, u.status, u.email FROM pin p
+INNER JOIN "user" u ON u.id = p.creator_id
 WHERE p.list_id = :list
 AND p.id < :offset
 ORDER BY p.created_at DESC LIMIT :limit`
@@ -182,8 +191,8 @@ func (s PinStore) AllForList(user *User, list int64, limit int, offset int64) ([
 }
 
 func (s PinStore) withTagsAndCreator(creator *User, q string, params map[string]interface{}) ([]*Pin, error) {
-	var pins []*Pin
-	_, err := s.Select(&pins, q, params)
+	var pinsWithUser []*pinWithUser
+	_, err := s.Select(&pinsWithUser, q, params)
 	if err != nil {
 		return nil, err
 	}
@@ -192,18 +201,20 @@ func (s PinStore) withTagsAndCreator(creator *User, q string, params map[string]
 		creator = &User{}
 	}
 
-	var tagIDs []int64
-	var userIDs []int64
-	for _, p := range pins {
-		tagIDs = append(tagIDs, p.ID)
-		if p.CreatorID != creator.ID {
-			userIDs = append(userIDs, p.CreatorID)
-		} else {
-			p.Creator = creator
+	var pinIDs []int64
+	var pins = make([]*Pin, len(pinsWithUser))
+	for i, p := range pinsWithUser {
+		pinIDs = append(pinIDs, p.ID)
+		p.Pin.Creator = &User{
+			ID:       p.Pin.CreatorID,
+			Username: p.BasicUser.Username,
+			Status:   p.BasicUser.Status,
+			Email:    p.BasicUser.Email,
 		}
+		pins[i] = &p.Pin
 	}
 
-	tags, err := s.pinTags(tagIDs)
+	tags, err := s.pinTags(pinIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -212,26 +223,6 @@ func (s PinStore) withTagsAndCreator(creator *User, q string, params map[string]
 		for _, p := range pins {
 			if p.ID == t.PinID {
 				p.Tags = append(p.Tags, t)
-				break
-			}
-		}
-	}
-
-	if len(userIDs) == 0 {
-		return pins, nil
-	}
-
-	users, err := s.pinCreators(userIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, p := range pins {
-		for _, u := range users {
-			if p.CreatorID == creator.ID {
-				break
-			} else if p.CreatorID == u.ID {
-				p.Creator = u
 				break
 			}
 		}
@@ -251,17 +242,4 @@ func (s PinStore) pinTags(ids []int64) ([]*Tag, error) {
 	}
 
 	return tags, nil
-}
-
-const pinCreatorsQuery = `SELECT * FROM user
-WHERE id IN %s`
-
-func (s PinStore) pinCreators(ids []int64) ([]*User, error) {
-	var users []*User
-	_, err := s.Select(&users, inQuery(pinCreatorsQuery, ids))
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
 }

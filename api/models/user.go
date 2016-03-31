@@ -37,6 +37,13 @@ type User struct {
 	CreatedAt time.Time  `db:"created_at" json:"-"`
 }
 
+// BasicUser are the displayable fields of user.
+type BasicUser struct {
+	Username string     `db:"username"`
+	Email    string     `db:"email"`
+	Status   UserStatus `db:"status"`
+}
+
 // NewUser creates a new user with the username, email AND
 // password. The resultant user already has the password
 // crypted using BCrypt. This function can panic if the BCrypt
@@ -87,7 +94,7 @@ type UserStore struct {
 	*gorp.DbMap
 }
 
-const existsUserQuery = `SELECT COUNT(*) FROM user
+const existsUserQuery = `SELECT COUNT(*) FROM "user"
 WHERE email = :email OR username = :username`
 
 // ExistsUser reports if there is an user with the email and
@@ -104,7 +111,7 @@ func (s UserStore) ExistsUser(email, username string) (bool, error) {
 	return n > 0, nil
 }
 
-const byLoginDetailsQuery = `SELECT * FROM user
+const byLoginDetailsQuery = `SELECT * FROM "user"
 WHERE (email = :login OR username = :login)`
 
 // ByLoginDetails returns the user whose login and password matches
@@ -127,9 +134,9 @@ func (s UserStore) ByLoginDetails(login, password string) (*User, error) {
 	return &user, nil
 }
 
-const byTokenQuery = `SELECT u.* FROM user u
+const byTokenQuery = `SELECT u.* FROM "user" u
 INNER JOIN token t ON t.user_id = u.id
-WHERE t.hash = :hash AND t.until < :now`
+WHERE t.hash = :hash AND t.until > :now`
 
 // ByToken retrieves an user that has an active token with the given hash.
 func (s UserStore) ByToken(hash string) (*User, error) {

@@ -166,12 +166,13 @@ func (s ListStore) All(user int64, limit, offset int) ([]*List, error) {
 }
 
 type userHasListWithUser struct {
-	*UserHasList
-	*User
+	Role   ListRole `db:"role"`
+	ListID int64    `db:"list_id"`
+	User
 }
 
-const userListsQuery = `SELECT l.*, u.* FROM user_has_list l
-INNER JOIN user u ON u.id = l.user_id
+const userListsQuery = `SELECT l.role, l.list_id, u.* FROM user_has_list l
+INNER JOIN "user" u ON u.id = l.user_id
 WHERE l.list_id IN %s`
 
 // UserLists retrieves the users and their associations with the lists for
@@ -189,9 +190,11 @@ func (s ListStore) UserLists(lists []*List) ([]*UserHasList, error) {
 
 	var userLists = make([]*UserHasList, len(records))
 	for i, r := range records {
-		l := r.UserHasList
-		l.User = r.User
-		userLists[i] = l
+		userLists[i] = &UserHasList{
+			ListID: r.ListID,
+			Role:   r.Role,
+			User:   &r.User,
+		}
 	}
 
 	return userLists, nil
@@ -200,6 +203,15 @@ func (s ListStore) UserLists(lists []*List) ([]*UserHasList, error) {
 // Create inserts a new list on the database and associates it
 // with the user.
 func (s ListStore) Create(list *List, user *User) error {
+	tx, err := s.Begin()
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Insert(list); err != nil {
+		return err
+	}
+
 	userList := &UserHasList{
 		UserID: user.ID,
 		User:   user,
@@ -207,7 +219,12 @@ func (s ListStore) Create(list *List, user *User) error {
 		Role:   ListOwner,
 	}
 	list.Users = append(list.Users, userList)
-	return s.Insert(list, userList)
+
+	if err := tx.Insert(userList); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 const countListsQuery = `SELECT COUNT(*) FROM user_has_list
