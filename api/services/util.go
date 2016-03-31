@@ -6,6 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mvader/pinlist/api/log"
+	"github.com/mvader/pinlist/api/middlewares"
+	"github.com/mvader/pinlist/api/models"
 )
 
 func internalError(ctx *gin.Context, err error) {
@@ -27,6 +29,15 @@ func unauthorized(ctx *gin.Context) {
 
 func badRequest(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusBadRequest)
+}
+
+func userFromCtx(c *gin.Context) *models.User {
+	return c.MustGet(middlewares.UserKey).(*models.User)
+}
+
+func idFromCtx(c *gin.Context) int64 {
+	n, _ := strconv.ParseInt(c.Params.ByName("id"), 10, 64)
+	return n
 }
 
 const (

@@ -32,10 +32,6 @@ func (t *Tag) Register(r *gin.RouterGroup) {
 	r.GET("/tags", t.Auth, t.List)
 }
 
-func (t *Tag) user(ctx *gin.Context) *models.User {
-	return ctx.MustGet(middlewares.UserKey).(*models.User)
-}
-
 // TagListResponse is the response with all tags retrieved.
 type TagListResponse struct {
 	Count int                `json:"count"`
@@ -45,7 +41,7 @@ type TagListResponse struct {
 
 // List returns all the tags for an user.
 func (t *Tag) List(c *gin.Context) {
-	user := t.user(c)
+	user := userFromCtx(c)
 	limit := intParamOrDefault(c, limitParam, 25)
 	offset := intParamOrDefault(c, offsetParam, 0)
 	tags, err := t.store.All(user.ID, limit, offset)
