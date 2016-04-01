@@ -134,25 +134,31 @@ func (s UserStore) ByLoginDetails(login, password string) (*User, error) {
 	return &user, nil
 }
 
-const byTokenQuery = `SELECT u.* FROM "user" u
+const byTokenQuery = `SELECT u.*, t.hash, t.until FROM "user" u
 INNER JOIN token t ON t.user_id = u.id
 WHERE t.hash = :hash AND t.until > :now`
 
+type userWithToken struct {
+	User
+	Hash  string    `db:"hash"`
+	Until time.Time `db:"until"`
+}
+
 // ByToken retrieves an user that has an active token with the given hash.
-func (s UserStore) ByToken(hash string) (*User, error) {
-	var user User
+func (s UserStore) ByToken(hash string) (*User, *Token, error) {
+	var user userWithToken
 	err := s.SelectOne(&user, byTokenQuery, map[string]interface{}{
 		"hash": hash,
 		"now":  time.Now(),
 	})
 	if err == sql.ErrNoRows {
-		return nil, nil
+		return nil, nil, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &user, nil
+	return &user.User, &Token{Hash: user.Hash, Until: user.Until}, nil
 }
 
 const deleteTokenQuery = `DELETE FROM token WHERE hash = %s`

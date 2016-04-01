@@ -119,10 +119,12 @@ func (s *AccountSuite) TestLogout(c *check.C) {
 }
 
 func (s *AccountSuite) assertToken(c *check.C, w *httptest.ResponseRecorder, email, login string) {
-	var token models.Token
-	c.Assert(json.Unmarshal(w.Body.Bytes(), &token), check.IsNil)
-	c.Assert(token.Hash, check.Not(check.Equals), "")
-	c.Assert(token.Until.IsZero(), check.Equals, false)
+	var resp AuthResponse
+	c.Assert(json.Unmarshal(w.Body.Bytes(), &resp), check.IsNil)
+	c.Assert(resp.Token.Hash, check.Not(check.Equals), "")
+	c.Assert(resp.Token.Until.IsZero(), check.Equals, false)
+	c.Assert(resp.User.Email, check.Not(check.Equals), "")
+	c.Assert(resp.User.Username, check.Not(check.Equals), "")
 	ok, err := s.account.store.ExistsUser(email, login)
 	c.Assert(err, check.IsNil)
 	c.Assert(ok, check.Equals, true)

@@ -13,6 +13,8 @@ import (
 const (
 	// TokenKey is the context key of the session.
 	TokenKey = "session_token"
+	// FullTokenKey retrieves the full token object.
+	FullTokenKey = "session_full_token"
 	// UserKey is the context key of the user.
 	UserKey = "session_user"
 	// AuthKey is the Authorization header key.
@@ -52,7 +54,7 @@ func (s *Session) Auth(c *gin.Context) {
 		return
 	}
 
-	user, err := s.store.ByToken(token)
+	user, fullToken, err := s.store.ByToken(token)
 	if err != nil {
 		log.Err(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -65,6 +67,7 @@ func (s *Session) Auth(c *gin.Context) {
 	}
 
 	c.Set(TokenKey, token)
+	c.Set(FullTokenKey, fullToken)
 	c.Set(UserKey, user)
 	c.Next()
 }
@@ -73,7 +76,7 @@ func (s *Session) Auth(c *gin.Context) {
 // is logged in but will not abort if the user is a guest.
 func (s *Session) MaybeAuth(c *gin.Context) {
 	token := retrieveToken(c)
-	user, err := s.store.ByToken(token)
+	user, fullToken, err := s.store.ByToken(token)
 	if err != nil {
 		log.Err(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -81,6 +84,7 @@ func (s *Session) MaybeAuth(c *gin.Context) {
 	}
 
 	c.Set(TokenKey, token)
+	c.Set(FullTokenKey, fullToken)
 	c.Set(UserKey, user)
 	c.Next()
 }

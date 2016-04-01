@@ -30,9 +30,16 @@ func (a *Account) Register(r *gin.RouterGroup) {
 	g := r.Group("/account")
 	{
 		g.POST("/create", middlewares.GuestHourLimit, a.Guest, a.Create)
+		g.POST("/auth", a.Session.Auth, a.Auth)
 		g.POST("/login", middlewares.GuestHourLimit, a.Guest, a.Login)
 		g.POST("/logout", a.Auth, a.Logout)
 	}
+}
+
+// AuthResponse is the response returned by any auth method (login, auth and register)
+type AuthResponse struct {
+	Token *models.Token `json:"token"`
+	User  *models.User  `json:"user"`
 }
 
 // CreateAccountForm is the structure of the form to create
@@ -47,7 +54,7 @@ type CreateAccountForm struct {
 func (a *Account) Create(c *gin.Context) {
 	var form CreateAccountForm
 	if err := c.BindJSON(&form); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		badRequest(c)
 		return
 	}
 
@@ -58,7 +65,7 @@ func (a *Account) Create(c *gin.Context) {
 	}
 
 	if ok {
-		c.AbortWithStatus(http.StatusBadRequest)
+		badRequest(c)
 		return
 	}
 
@@ -81,7 +88,7 @@ type LoginForm struct {
 func (a *Account) Login(c *gin.Context) {
 	var form LoginForm
 	if err := c.BindJSON(&form); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		badRequest(c)
 		return
 	}
 
@@ -96,7 +103,7 @@ func (a *Account) login(c *gin.Context, login, password string) {
 	}
 
 	if user == nil {
-		c.AbortWithStatus(http.StatusBadRequest)
+		badRequest(c)
 		return
 	}
 
@@ -106,7 +113,18 @@ func (a *Account) login(c *gin.Context, login, password string) {
 		return
 	}
 
-	c.JSON(http.StatusOK, token)
+	c.JSON(http.StatusOK, AuthResponse{
+		Token: token,
+		User:  user,
+	})
+}
+
+// Auth only returns the token and the user of the request issuer if logged in.
+func (a *Account) Auth(c *gin.Context) {
+	c.JSON(http.StatusOK, AuthResponse{
+		Token: c.MustGet(middlewares.FullTokenKey).(*models.Token),
+		User:  userFromCtx(c),
+	})
 }
 
 // Logout terminates the session associated to the current token.
@@ -116,5 +134,5 @@ func (a *Account) Logout(c *gin.Context) {
 		internalError(c, err)
 		return
 	}
-	c.Status(http.StatusOK)
+	ok(c)
 }

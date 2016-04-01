@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mvader/pinlist/api/log"
 	"github.com/mvader/pinlist/api/middlewares"
 	"github.com/mvader/pinlist/api/models"
 	"gopkg.in/gorp.v1"
@@ -65,7 +64,6 @@ type CreatePinForm struct {
 func (s *Pin) Create(c *gin.Context) {
 	var form CreatePinForm
 	if err := c.BindJSON(&form); err != nil {
-		log.Err(err)
 		badRequest(c)
 		return
 	}
