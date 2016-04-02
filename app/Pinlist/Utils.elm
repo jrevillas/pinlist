@@ -2,7 +2,7 @@ module Pinlist.Utils (justModel, preventDefault) where
 
 {- TODO: Split utils in types -}
 
-import Pinlist.Actions exposing (..)
+import Pinlist.App.Action exposing (Action)
 import Effects exposing (Effects)
 import Html.Events exposing (onWithOptions, targetValue, Options)
 import Json.Decode as Json
@@ -16,7 +16,7 @@ justModel model =
 
 evtWithOpts : Signal.Address Action -> String -> Options -> Html.Attribute
 evtWithOpts address evt opts =
-  onWithOptions evt opts Json.value (\_ -> Signal.message address NoOp)
+  onWithOptions evt opts Json.value (\_ -> Signal.message address Pinlist.App.Action.NoOp)
 
 
 preventDefault : Signal.Address Action -> String -> Html.Attribute
