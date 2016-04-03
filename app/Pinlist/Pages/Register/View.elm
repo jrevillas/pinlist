@@ -2,7 +2,7 @@ module Pinlist.Pages.Register.View (..) where
 
 import Pinlist.Pages.Register.Model exposing (Model)
 import Pinlist.App.Action as App
-import Pinlist.Pages.Register.Update exposing (..)
+import Pinlist.Pages.Register.Action exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)

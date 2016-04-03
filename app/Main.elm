@@ -5,10 +5,11 @@ import Effects exposing (Never)
 import StartApp
 import RouteHash
 import Signal
-import Pinlist.Actions exposing (..)
-import Pinlist.Model exposing (Model)
-import Pinlist.View exposing (view)
-import Pinlist.Update exposing (..)
+import Pinlist.App.Action exposing (..)
+import Pinlist.App.Model exposing (Model)
+import Pinlist.App.View exposing (view)
+import Pinlist.App.Router exposing (delta2update, location2action)
+import Pinlist.App.Update exposing (update)
 import Pinlist exposing (init)
 import Html exposing (Html)
 

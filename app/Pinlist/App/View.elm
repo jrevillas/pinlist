@@ -16,5 +16,5 @@ view address model =
     App.Register ->
       Register.view address model.register
 
-    App.Loading ->
+    _ ->
       div [] []

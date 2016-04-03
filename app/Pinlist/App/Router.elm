@@ -2,8 +2,6 @@ module Pinlist.App.Router (..) where
 
 import Pinlist.App.Model as App exposing (Model)
 import Pinlist.App.Action exposing (..)
-import Pinlist.Pages.Login.Model as Login
-import Pinlist.Pages.Register.Model as Register
 import RouteHash
 import Maybe exposing (..)
 
@@ -19,8 +17,11 @@ delta2update prev next =
         App.Register ->
           Just <| RouteHash.set [ "register" ]
 
-        App.Empty ->
-          Just <| RouteHash.set [ "login" ]
+        App.Loading ->
+          Just <| RouteHash.set [ "" ]
+
+        App.Home ->
+          Just <| RouteHash.set [ "home" ]
 
     Nothing ->
       {- If the user is not logged in we want to redirect
@@ -38,16 +39,18 @@ delta2update prev next =
 location2action : List String -> List Action
 location2action args =
   case args of
-    first :: rest ->
-      case first of
-        "login" ->
-          [ SetActive App.Login ]
+    [ "login" ] ->
+      [ SetActive App.Login ]
 
-        "register" ->
-          [ SetActive App.Login ]
+    [ "register" ] ->
+      [ SetActive App.Register ]
 
-        _ ->
-          [ SetActive App.Login ]
+    "home" :: rest ->
+      [ SetActive App.Home ]
+
+    [ "" ] ->
+      [ SetActive App.Loading ]
 
     _ ->
-      [ SetActive App.Login ]
+      -- TODO: show 404
+      [ SetActive App.Loading ]

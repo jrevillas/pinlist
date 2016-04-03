@@ -121,8 +121,15 @@ func (a *Account) login(c *gin.Context, login, password string) {
 
 // Auth only returns the token and the user of the request issuer if logged in.
 func (a *Account) Auth(c *gin.Context) {
+	token := c.MustGet(middlewares.FullTokenKey).(*models.Token)
+	token, err := a.store.UpdateHash(token)
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+
 	c.JSON(http.StatusOK, AuthResponse{
-		Token: c.MustGet(middlewares.FullTokenKey).(*models.Token),
+		Token: token,
 		User:  userFromCtx(c),
 	})
 }

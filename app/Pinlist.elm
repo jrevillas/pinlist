@@ -1,8 +1,8 @@
 module Pinlist (..) where
 
 import Effects exposing (Effects)
-import Pinlist.Model exposing (initialModel, Model)
-import Pinlist.Actions exposing (Action)
+import Pinlist.App.Model exposing (initialModel, Model)
+import Pinlist.App.Action exposing (Action)
 
 
 init : ( Model, Effects Action )

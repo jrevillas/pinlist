@@ -1,7 +1,9 @@
-module Pinlist.Account.Model (Model, initialModel) where
+module Pinlist.Account.Model (Model, initialModel, fromUserAndToken, emptyModel) where
 
-import Pinlist.User exposing (User, Token, UserAndToken)
+import Pinlist.User exposing (User, Token, UserAndToken, userDecoder, tokenDecoder)
+import Json.Decode
 import Maybe exposing (..)
+import LocalStorage
 
 
 type alias Model =
@@ -10,13 +12,55 @@ type alias Model =
   }
 
 
+decodeToken : String -> Maybe Token
+decodeToken str =
+  case Json.Decode.decodeString tokenDecoder str of
+    Ok token ->
+      Just token
+
+    Err _ ->
+      Nothing
+
+
+decodeUser : String -> Maybe User
+decodeUser str =
+  case Json.Decode.decodeString userDecoder str of
+    Ok user ->
+      Just user
+
+    Err _ ->
+      Nothing
+
+
 initialModel : Model
 initialModel =
+  let
+    token =
+      case LocalStorage.get "token" of
+        Just t ->
+          decodeToken t
+
+        Nothing ->
+          Nothing
+
+    user =
+      case LocalStorage.get "user" of
+        Just u ->
+          decodeUser u
+
+        Nothing ->
+          Nothing
+  in
+    Model user token
+
+
+emptyModel : Model
+emptyModel =
   Model Nothing Nothing
 
 
-fromUserAndToken : UserAndToken -> Model
+fromUserAndToken : ( User, Token ) -> Model
 fromUserAndToken userAndToken =
   Model
-    (Just userAndToken.user)
-    (Just userAndToken.token)
+    (Just (fst userAndToken))
+    (Just (snd userAndToken))

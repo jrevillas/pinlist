@@ -9,6 +9,7 @@ import Maybe exposing (..)
 type Page
   = Login
   | Register
+  | Home
   | Loading
 
 

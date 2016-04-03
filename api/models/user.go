@@ -161,6 +161,22 @@ func (s UserStore) ByToken(hash string) (*User, *Token, error) {
 	return &user.User, &Token{Hash: user.Hash, Until: user.Until}, nil
 }
 
+const updateHashQuery = `UPDATE token SET hash = %s WHERE hash = %s`
+
+// UpdateHash updates the hash of the token and returns
+// the updated token.
+func (s UserStore) UpdateHash(t *Token) (*Token, error) {
+	hash := uuid.NewV4().String()
+	query := fmt.Sprintf(updateHashQuery, s.Dialect.BindVar(0), s.Dialect.BindVar(1))
+	_, err := s.Exec(query, hash, t.Hash)
+	if err != nil {
+		return nil, err
+	}
+
+	t.Hash = hash
+	return t, nil
+}
+
 const deleteTokenQuery = `DELETE FROM token WHERE hash = %s`
 
 // DeleteToken removes the token with the given hash from

@@ -6,18 +6,12 @@ import Pinlist.Pages.Login.Action exposing (..)
 import Pinlist.User exposing (UserAndToken)
 import Pinlist.Pages.Login.Model exposing (..)
 import Pinlist.User exposing (userAndTokenDecoder)
+import Pinlist.Utils exposing (justModel)
 import Http.Extra exposing (..)
-import Json.Decode.Extra exposing (..)
-import Json.Decode exposing (..)
 import Json.Encode
 import Effects exposing (Effects)
 import Task exposing (Task)
 import Result exposing (..)
-
-
-justModel : Model -> ( Model, Effects App.Action )
-justModel model =
-  ( model, Effects.none )
 
 
 update : Action -> Model -> ( Model, Effects App.Action )
@@ -35,7 +29,10 @@ update action model =
     Login result ->
       case result of
         Ok resp ->
-          ( initialModel, Effects.none )
+          ( initialModel
+          , Task.succeed (App.SetUser ( resp.data.user, resp.data.token ))
+              |> Effects.task
+          )
 
         Err _ ->
           justModel
