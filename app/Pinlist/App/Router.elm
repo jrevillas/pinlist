@@ -12,10 +12,10 @@ delta2update prev next =
     Just user ->
       case next.activePage of
         App.Login ->
-          Just <| RouteHash.set [ "login" ]
+          Just <| RouteHash.set [ "" ]
 
         App.Register ->
-          Just <| RouteHash.set [ "register" ]
+          Just <| RouteHash.set [ "" ]
 
         App.Loading ->
           Just <| RouteHash.set [ "" ]
@@ -24,10 +24,6 @@ delta2update prev next =
           Just <| RouteHash.set [ "home" ]
 
     Nothing ->
-      {- If the user is not logged in we want to redirect
-      always to login unless is the register page
-      or the list page (TODO)
-      -}
       case next.activePage of
         App.Register ->
           Just <| RouteHash.set [ "register" ]

@@ -8,7 +8,7 @@ import Pinlist.Pages.Login.Update as Login
 import Pinlist.Pages.Register.Update as Register
 import Pinlist.App.Action exposing (..)
 import Effects exposing (Effects)
-import Debug
+import Task
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -52,23 +52,45 @@ update action model =
         model' =
           { model | activePage = page }
       in
-        case page of
-          App.Login ->
-            justModel model'
+        case model.account.user of
+          Just user ->
+            case page of
+              App.Loading ->
+                case model.account.token of
+                  Nothing ->
+                    ( model', redirect App.Login )
 
-          App.Register ->
-            justModel model'
+                  Just token ->
+                    ( model', checkAuth token )
 
-          App.Loading ->
-            case model.account.token of
-              Nothing ->
-                justModel { model | activePage = App.Login }
+              App.Login ->
+                ( model', redirect App.Home )
 
-              Just token ->
-                ( model', checkAuth token )
+              App.Register ->
+                ( model', redirect App.Home )
 
-          App.Home ->
-            justModel model'
+              App.Home ->
+                if model.account.validated then
+                  justModel model'
+                else
+                  ( model', redirect App.Loading )
+
+          Nothing ->
+            case page of
+              App.Register ->
+                justModel model'
+
+              App.Login ->
+                justModel model'
+
+              _ ->
+                ( model', redirect App.Login )
 
     NoOp ->
       justModel model
+
+
+redirect : App.Page -> Effects Action
+redirect page =
+  Task.succeed (SetActive page)
+    |> Effects.task

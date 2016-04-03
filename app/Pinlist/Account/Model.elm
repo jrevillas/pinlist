@@ -9,6 +9,7 @@ import LocalStorage
 type alias Model =
   { user : Maybe User
   , token : Maybe Token
+  , validated : Bool
   }
 
 
@@ -51,12 +52,12 @@ initialModel =
         Nothing ->
           Nothing
   in
-    Model user token
+    Model user token False
 
 
 emptyModel : Model
 emptyModel =
-  Model Nothing Nothing
+  Model Nothing Nothing False
 
 
 fromUserAndToken : ( User, Token ) -> Model
@@ -64,3 +65,4 @@ fromUserAndToken userAndToken =
   Model
     (Just (fst userAndToken))
     (Just (snd userAndToken))
+    True
