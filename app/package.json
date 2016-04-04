@@ -1,0 +1,39 @@
+{
+  "name": "Pinlist",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinlist is...",
+  "scripts": {
+    "start": "webpack-dev-server --hot --inline --content-base ./",
+    "build": "rimraf dist && webpack",
+    "watch": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mvader/pinlist.git"
+  },
+  "author": "Miguel Molina <hi@mvader.me>",
+  "license": "MIT",
+  "keywords": [
+    "pinlist",
+    "bookmarks",
+    "service"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "autoprefixer": "6.3.3",
+    "css-loader": "0.23.1",
+    "elm": "0.16.0",
+    "elm-hot-loader": "0.2.0",
+    "elm-webpack-loader": "2.0.1",
+    "extract-text-webpack-plugin": "1.0.1",
+    "file-loader": "0.8.5",
+    "html-webpack-plugin": "2.9.0",
+    "postcss-loader": "0.8.1",
+    "rimraf": "2.5.2",
+    "style-loader": "0.13.0",
+    "webpack": "1.12.13",
+    "webpack-dev-server": "1.14.1",
+    "webpack-merge": "0.7.3"
+  }
+}

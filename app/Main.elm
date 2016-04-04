@@ -40,6 +40,7 @@ port routeTasks =
     }
 
 
+port swap : Signal.Signal Bool
 port tasks : Signal (Task.Task Never ())
 port tasks =
   app.tasks

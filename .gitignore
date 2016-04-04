@@ -24,5 +24,4 @@ rethinkdb_data/*
 config.json
 magnet
 elm-stuff
-app/index.html
 elm.js
