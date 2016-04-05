@@ -22,6 +22,6 @@ _testmain.go
 *.exe
 rethinkdb_data/*
 config.json
-magnet
 elm-stuff
 elm.js
+node_modules
