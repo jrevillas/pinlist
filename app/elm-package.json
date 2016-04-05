@@ -4,7 +4,7 @@
     "repository": "https://github.com/mvader/pinlist.git",
     "license": "MIT",
     "source-directories": [
-        "src",
+        "src/elm",
         "vendor/elm-localstorage"
     ],
     "exposed-modules": [],
