@@ -8,10 +8,15 @@ type Status
   | Loading
 
 
+type ErrorMessage
+  = EmptyField
+  | InvalidCredentials
+
+
 type alias Model =
   { login : String
   , pass : String
-  , error : Maybe String
+  , error : Maybe ErrorMessage
   , status : Status
   }
 

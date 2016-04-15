@@ -8,11 +8,18 @@ type Status
   | Loading
 
 
+type ErrorMessage
+  = InvalidUsername
+  | InvalidEmail
+  | InvalidPassword
+  | DataTaken
+
+
 type alias Model =
   { username : String
   , email : String
   , pass : String
-  , error : Maybe String
+  , error : Maybe ErrorMessage
   , status : Status
   }
 

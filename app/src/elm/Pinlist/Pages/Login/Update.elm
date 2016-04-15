@@ -12,6 +12,7 @@ import Json.Encode
 import Effects exposing (Effects)
 import Task exposing (Task)
 import Result exposing (..)
+import Maybe exposing (..)
 
 
 update : Action -> Model -> ( Model, Effects App.Action )
@@ -24,7 +25,10 @@ update action model =
       justModel { model | pass = v }
 
     Submit ->
-      ( { model | status = Loading }, login model.login model.pass )
+      if model.login /= "" && model.pass /= "" then
+        ( { model | status = Loading, error = Nothing }, login model.login model.pass )
+      else
+        justModel { model | status = Ready, error = Just EmptyField }
 
     Login result ->
       case result of
@@ -38,7 +42,7 @@ update action model =
           justModel
             { model
               | status = Ready
-              , error = Maybe.Just "Invalid credentials"
+              , error = Maybe.Just InvalidCredentials
             }
 
 

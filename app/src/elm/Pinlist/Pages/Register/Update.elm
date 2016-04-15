@@ -12,6 +12,8 @@ import Json.Encode
 import Effects exposing (Effects)
 import Task exposing (Task)
 import Result exposing (..)
+import Regex
+import String
 
 
 update : Action -> Model -> ( Model, Effects App.Action )
@@ -27,7 +29,14 @@ update action model =
       justModel { model | email = v }
 
     Submit ->
-      ( { model | status = Loading }, signup model )
+      if not (Regex.contains (Regex.regex "^([a-zA-Z0-9]{2,60})$") model.username) then
+        justModel { model | status = Ready, error = Just InvalidUsername }
+      else if not (Regex.contains (Regex.regex "^.+@.+\\..+$") model.email) then
+        justModel { model | status = Ready, error = Just InvalidEmail }
+      else if String.length model.pass < 8 then
+        justModel { model | status = Ready, error = Just InvalidPassword }
+      else
+        ( { model | status = Loading }, signup model )
 
     Register result ->
       case result of
@@ -38,7 +47,7 @@ update action model =
           )
 
         Err _ ->
-          justModel { model | status = Ready, error = Maybe.Just "Invalid fields" }
+          justModel { model | status = Ready, error = Maybe.Just DataTaken }
 
 
 signup : Model -> Effects App.Action
