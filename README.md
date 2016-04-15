@@ -1,4 +1,4 @@
-# ![Pinlist](https://cdn.rawgit.com/mvader/pinlist/master/pinlist.svg)
+# ![Pinlist](https://cdn.rawgit.com/mvader/pinlist/pinlist/pinlist.svg)
 
 Pinlist is a bookmark management tool with collaborative lists.
 
@@ -11,7 +11,7 @@ Pinlist is under heavy development yet and only very basic functionality is comp
 ## Roadmap
 
 * [x] Finish v1 API
-* [-] Finish frontend client with support for v1 API
+* [ ] Finish frontend client with support for v1 API
 * [ ] Deployable via Dockerfiles
 * [ ] Deploy service to the web
 * [ ] User relationships and collaborative lists
