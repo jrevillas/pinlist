@@ -1,0 +1,3 @@
+[submodule "app/vendor/elm-localstorage"]
+	path = app/vendor/elm-localstorage
+	url = https://github.com/mvader/elm-localstorage
