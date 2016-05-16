@@ -66,7 +66,7 @@ func NewUser(username, email, password string) *User {
 	return user
 }
 
-// Token is an code that grants access to the app to a
+// Token is a code that grants access to the app to a
 // specific user for a certain amount of time.
 type Token struct {
 	ID        int64     `db:"id" json:"-"`
